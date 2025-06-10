@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schema & Transform</title>
+</head>
+<body>
+    <h1>Schema & Transformation</h1>
+    <form id="schema-form">
+        <label>Input Schema (JSON):<br><textarea name="input" rows="6" cols="60"></textarea></label><br>
+        <label>Output Schema (JSON):<br><textarea name="output" rows="6" cols="60"></textarea></label><br>
+        <label>Mapping (JSON, e.g. {"new_field": "old_field"}):<br><textarea name="mapping" rows="3" cols="60"></textarea></label><br>
+        <button type="submit">Set Schema</button>
+    </form>
+    <h2>Live Data</h2>
+    <pre id="raw"></pre>
+    <h2>Transformed Data</h2>
+    <pre id="transformed"></pre>
+    <script>
+    document.getElementById('schema-form').onsubmit = async function(e) {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        const schema = {
+            input: JSON.parse(form.get('input')||'{}'),
+            output: JSON.parse(form.get('output')||'{}'),
+            mapping: JSON.parse(form.get('mapping')||'{}')
+        };
+        await fetch('/schema', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(schema)
+        });
+    };
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        document.getElementById('raw').innerText = JSON.stringify(data.raw, null, 2);
+        document.getElementById('transformed').innerText = JSON.stringify(data.transformed, null, 2);
+    };
+    </script>
+</body>
+</html>
